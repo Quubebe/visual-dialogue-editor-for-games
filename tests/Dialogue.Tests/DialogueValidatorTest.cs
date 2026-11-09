@@ -50,6 +50,7 @@ public class DialogueValidatorTest
         var choice = new DialogueChoice { Text = "Дальше" };
         start.Choices.Add(choice);
 
+        start.Choices.Add(new DialogueChoice { Text = "Рабочий путь", TargetNodeId = end.Id });
         var document = new DialogueDocument { StartNodeId = start.Id };
         document.Nodes.AddRange(new[] { start, end });
 
@@ -62,5 +63,25 @@ public class DialogueValidatorTest
 
         choice.TargetNodeId = end.Id;
         Assert.IsEmpty(DialogueValidator.Validate(document));
+    }
+
+    [TestMethod]
+    public void UnreachableNode_IsWarning_AndCycleIsAllowed()
+    {
+        var start = new DialogueNode { Text = "Начало." };
+        var loop = new DialogueNode { Text = "Вернуться?" };
+        var orphan = new DialogueNode { Text = "Черновик.", IsEnding = true };
+
+        start.Choices.Add(new DialogueChoice { TargetNodeId = loop.Id });
+        loop.Choices.Add(new DialogueChoice { TargetNodeId = start.Id });
+
+        var document = new DialogueDocument { StartNodeId = start.Id };
+        document.Nodes.AddRange(new[] { start, loop, orphan });
+
+        var issues = DialogueValidator.Validate(document);
+
+        Assert.HasCount(1, issues);
+        Assert.IsFalse(issues[0].IsError);
+        Assert.AreEqual<Guid?>(orphan.Id, issues[0].NodeId);
     }
 }

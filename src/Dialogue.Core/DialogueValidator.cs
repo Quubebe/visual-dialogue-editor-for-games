@@ -1,5 +1,3 @@
-using System;
-
 namespace Dialogue.Core;
 
 public static class DialogueValidator
@@ -49,6 +47,51 @@ public static class DialogueValidator
             }
         }
 
+        if (document.StartNodeId is Guid startId && document.Nodes.Exists(node => node.Id == startId))
+        {
+            HashSet<Guid> reachable = GetReachableNodeIds(document);
+            foreach (DialogueNode node in document.Nodes)
+            {
+                if (!reachable.Contains(node.Id))
+                {
+                    issues.Add(new DialogueValidationIssue
+                    {
+                        Message = "Реплика недостижима от начала диалога.",
+                        IsError = false,
+                        NodeId = node.Id
+                    });
+                }
+            }
+        }
+
         return issues;
+    }
+
+    private static HashSet<Guid> GetReachableNodeIds(DialogueDocument document)
+    {
+        var reachable = new HashSet<Guid>();
+
+        if (document.StartNodeId is not Guid startId) return reachable;
+
+        var pending = new Queue<Guid>();
+        pending.Enqueue(startId);
+
+        while (pending.Count > 0)
+        {
+            Guid id = pending.Dequeue();
+            DialogueNode? node = document.Nodes.Find(n => n.Id == id);
+
+            if (node is null || !reachable.Add(id)) continue;
+            if (node.IsEnding) continue;
+
+            foreach (DialogueChoice choice in node.Choices)
+            {
+                if (choice.TargetNodeId is Guid targetId)
+                {
+                    pending.Enqueue(targetId);
+                }
+            }
+        }
+        return reachable;
     }
 }
