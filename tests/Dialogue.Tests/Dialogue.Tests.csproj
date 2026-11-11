@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Dialogue.Core\Dialogue.Core.csproj" />
+    <ProjectReference Include="..\..\src\Dialogue.Persistence\Dialogue.Persistence.csproj" />
   </ItemGroup>
 
 </Project>
