@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Drawing;
+using System.IO;
 using System.Windows.Input;
 using Dialogue.Core;
 using Dialogue.Persistence;
@@ -10,9 +12,36 @@ public class EditorViewModel : INotifyPropertyChanged
 {
     private NodeViewModel? _selectedNode;
 
-    public DialogueProject Project { get; } = new();
+    public DialogueProject Project { get; private set;} = new();
+
+    public void SaveProject(string path)
+    {
+        DialogueProjectFileStorage.Save(path, Project);
+    }
+
+    public void LoadProject(string path)
+    {
+        DialogueProject loaded = DialogueProjectFileStorage.Load(path);
+
+        if(loaded.Dialogue.Nodes is null ||
+        loaded.Dialogue.Nodes.Any(node=> node is null ||
+        node.Choices is null))
+        {
+            throw new InvalidDataException("В проекте поврежден список реплик или ответов.");
+        }
+
+        Project = loaded;
+        SelectedNode = null;
+        Nodes.Clear();
+
+        foreach(DialogueNode node in Project.Dialogue.Nodes) Nodes.Add(new NodeViewModel(node));
+
+        SelectedNode = Nodes.FirstOrDefault(node=>node.Id == Project.Dialogue.StartNodeId) ?? Nodes.FirstOrDefault();
+    }
+
     public ObservableCollection<NodeViewModel> Nodes { get; } = new();
     public ICommand AddNodeCommand { get; }
+    public ICommand AddChoiceCommand { get; }
 
     public NodeViewModel? SelectedNode
     {
@@ -34,7 +63,7 @@ public class EditorViewModel : INotifyPropertyChanged
     public EditorViewModel()
     {
         AddNodeCommand = new RelayCommand(AddNode);
-
+        AddChoiceCommand = new RelayCommand(AddChoice);
         var first = new DialogueNode
         {
             Text = "Первая реплика",
@@ -63,5 +92,16 @@ public class EditorViewModel : INotifyPropertyChanged
         var item = new NodeViewModel(node);
         Nodes.Add(item);
         SelectedNode = item;
+    }
+
+    private void AddChoice()
+    {
+        if (SelectedNode is null) return;
+
+        var choice = new DialogueChoice { Text = "Новый ответ" };
+
+        SelectedNode.Model.Choices.Add(choice);
+        SelectedNode.Choices.Add(choice);
+        SelectedNode.IsEnding = false;
     }
 }

@@ -1,11 +1,13 @@
 using System.ComponentModel;
 using Dialogue.Core;
+using System.Collections.ObjectModel;
 
 namespace Dialogue.Editor;
 
 public class NodeViewModel : INotifyPropertyChanged
 {
     public DialogueNode Model { get; }
+    public ObservableCollection<DialogueChoice> Choices{get;}
 
     public Guid Id => Model.Id;
 
@@ -44,5 +46,6 @@ public class NodeViewModel : INotifyPropertyChanged
     public NodeViewModel(DialogueNode model)
     {
         Model = model ?? throw new ArgumentNullException(nameof(model));
+        Choices = new ObservableCollection<DialogueChoice>(model.Choices);
     }
 }
