@@ -1,3 +1,5 @@
+using System.Dynamic;
+
 namespace Dialogue.Core;
 
 public static class DialogueValidator
@@ -29,12 +31,57 @@ public static class DialogueValidator
                     NodeId = node.Id
                 });
             }
+
+            if (node.CharacterId is Guid characterId && !document.Characters.Exists(character => character.Id == characterId))
+            {
+                issues.Add(new DialogueValidationIssue
+                {
+                    Message = "Реплика ссылается на отсутствующего персонажа.",
+                    IsError = true,
+                    NodeId = node.Id
+                });
+            }
+
+            if (!node.IsEnding && node.Choices.Count == 0)
+            {
+                issues.Add(new DialogueValidationIssue
+                {
+                    Message = "У реплики нет ответов и она не отмечена как завершение.",
+                    IsError = true,
+                    NodeId = node.Id
+                });
+            }
+        }
+
+        var seenChoiceIds = new HashSet<Guid>();
+        var seenCharacterIds = new HashSet<Guid>();
+
+        foreach (DialogueCharacter character in document.Characters)
+        {
+            if (!seenCharacterIds.Add(character.Id))
+            {
+                issues.Add(new DialogueValidationIssue
+                {
+                    Message = $"Повторяется ID персонажа '{character.Name}': {character.Id}.",
+                    IsError = true
+                });
+            }
         }
 
         foreach (DialogueNode node in document.Nodes)
         {
             foreach (DialogueChoice choice in node.Choices)
             {
+                if (!seenChoiceIds.Add(choice.Id))
+                {
+                    issues.Add(new DialogueValidationIssue
+                    {
+                        Message = $"Повторяется ID ответа: {choice.Id}.",
+                        IsError = true,
+                        NodeId = node.Id
+                    });
+                }
+
                 if (choice.TargetNodeId is null || !document.Nodes.Exists(target => target.Id == choice.TargetNodeId))
                 {
                     issues.Add(new DialogueValidationIssue
