@@ -1,0 +1,55 @@
+﻿<Window x:Class="Dialogue.Editor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Редактор диалогов"
+        Height="600"
+        Width="900">
+    <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="16"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Реплики"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Margin="0,0,0,8"/>
+            <Button Grid.Row="1"
+                    Content="Добавить реплику"
+                    Command="{Binding AddNodeCommand}"
+                    Margin="0,0,0,8"/>
+            <ListBox Grid.Row="2"
+                     ItemsSource="{Binding Nodes}"
+                     SelectedItem="{Binding SelectedNode, Mode=TwoWay}"
+                     DisplayMemberPath="Text"/>
+        </Grid>
+
+        <StackPanel Grid.Column="2">
+            <TextBlock Text="Выбранная реплика"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Margin="0,0,0,12"/>
+            <TextBox Text="{Binding SelectedNode.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     Height="120"/>
+
+            <CheckBox Content="Завершает разговор"
+                      IsChecked="{Binding SelectedNode.IsEnding, Mode=TwoWay}"
+                      Margin="0,12,0,0"/>
+            <TextBlock Text="ID карточки"
+                       Margin="0,20,0,4"/>
+            <TextBlock Text="{Binding SelectedNode.Id}"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+    </Grid>
+</Window>
