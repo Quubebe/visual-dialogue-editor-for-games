@@ -7,4 +7,6 @@ public class DialogueNode
     public string Text { get; set; } = string.Empty;
     public List<DialogueChoice> Choices { get; set; } = new();
     public bool IsEnding { get; set; }
+    public DialogueFlagCondition? ShowCondition { get; set; }
+    public Guid? NextNodeId { get; set; }
 }

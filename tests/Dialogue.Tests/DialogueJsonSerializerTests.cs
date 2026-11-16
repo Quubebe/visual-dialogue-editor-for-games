@@ -90,4 +90,53 @@ public sealed class DialogueJsonSerializerTests
             () => DialogueJsonSerializer.Deserialize("{"));
         Assert.AreEqual("Не удалось прочитать JSON диалога.", malformed.Message);
     }
+
+    [TestMethod]
+    public void ProjectJson_RestoresConditionsAndFlagChanges()
+    {
+        var node = new DialogueNode
+        {
+            ShowCondition = new DialogueFlagCondition
+            {
+                FlagName = "quest",
+                ExpectedValue = false
+            }
+        };
+
+        var choice = new DialogueChoice
+        {
+            ShowCondition = new DialogueFlagCondition
+            {
+                FlagName = "quest",
+                ExpectedValue = false
+            }
+        };
+        choice.FlagChanges.Add(new DialogueFlagChange
+        {
+            FlagName = "quest",
+            NewValue = true
+        });
+        node.Choices.Add(choice);
+
+        var project = new DialogueProject();
+        project.Dialogue.Nodes.Add(node);
+
+        string json = DialogueProjectJsonSerializer.Serialize(project);
+        DialogueProject restored = DialogueProjectJsonSerializer.Deserialize(json);
+
+        var restoredNode = restored.Dialogue.Nodes[0];
+        var restoredChoice = restoredNode.Choices[0];
+
+        Assert.IsNotNull(restoredNode.ShowCondition);
+        Assert.AreEqual("quest", restoredNode.ShowCondition.FlagName);
+        Assert.IsFalse(restoredNode.ShowCondition.ExpectedValue);
+
+        Assert.IsNotNull(restoredChoice.ShowCondition);
+        Assert.AreEqual("quest", restoredChoice.ShowCondition.FlagName);
+        Assert.IsFalse(restoredChoice.ShowCondition.ExpectedValue);
+
+        Assert.HasCount(1, restoredChoice.FlagChanges);
+        Assert.AreEqual("quest", restoredChoice.FlagChanges[0].FlagName);
+        Assert.IsTrue(restoredChoice.FlagChanges[0].NewValue);
+    }
 }

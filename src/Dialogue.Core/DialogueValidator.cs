@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Dynamic;
 
 namespace Dialogue.Core;
@@ -42,11 +43,50 @@ public static class DialogueValidator
                 });
             }
 
-            if (!node.IsEnding && node.Choices.Count == 0)
+            if (!node.IsEnding && node.Choices.Count == 0 && node.NextNodeId is null)
             {
                 issues.Add(new DialogueValidationIssue
                 {
-                    Message = "У реплики нет ответов и она не отмечена как завершение.",
+                    Message = "У реплики нет ответов, следующей реплики или завершения.",
+                    IsError = true,
+                    NodeId = node.Id
+                });
+            }
+
+            if (node.NextNodeId is Guid nextId && !document.Nodes.Exists(target => target.Id == nextId))
+            {
+                issues.Add(new DialogueValidationIssue
+                {
+                    Message = "Следующая реплика не существует.",
+                    IsError = true,
+                    NodeId = node.Id
+                });
+            }
+
+            if (node.IsEnding && (node.NextNodeId is not null || node.Choices.Count > 0))
+            {
+                issues.Add(new DialogueValidationIssue
+                {
+                    Message = "Завершающая реплика не должна иметь ответов или следующей реплики.",
+                    IsError = true,
+                    NodeId = node.Id
+                });
+            }
+            else if (node.NextNodeId is not null && node.Choices.Count > 0)
+            {
+                issues.Add(new DialogueValidationIssue
+                {
+                    Message = "Выберите один способ продолжения: ответы или следующая реплика.",
+                    IsError = true,
+                    NodeId = node.Id
+                });
+            }
+
+            if (node.ShowCondition is { } condition && string.IsNullOrWhiteSpace(condition.FlagName))
+            {
+                issues.Add(new DialogueValidationIssue
+                {
+                    Message = "условие показа реплики: не указано имя флага.",
                     IsError = true,
                     NodeId = node.Id
                 });
@@ -91,6 +131,30 @@ public static class DialogueValidator
                         NodeId = node.Id
                     });
                 }
+
+                if (choice.ShowCondition is { } condition && string.IsNullOrWhiteSpace(condition.FlagName))
+                {
+                    issues.Add(new DialogueValidationIssue
+                    {
+                        Message = $"Условие показа ответа '{choice.Text}': не указано имя флага.",
+                        IsError = true,
+                        NodeId = node.Id
+                    });
+                }
+
+                foreach (DialogueFlagChange change in choice.FlagChanges)
+                {
+                    if (string.IsNullOrWhiteSpace(change.FlagName))
+                    {
+
+                        issues.Add(new DialogueValidationIssue
+                        {
+                            Message = $"Пследствие ответа '{choice.Text}': не указано имя флага.",
+                            IsError = true,
+                            NodeId = node.Id
+                        });
+                    }
+                }
             }
         }
 
@@ -109,6 +173,26 @@ public static class DialogueValidator
                     });
                 }
             }
+        }
+
+        foreach (DialogueValidationIssue issue in issues)
+        {
+            if (issue.NodeId is not Guid nodeId)
+                continue;
+
+            DialogueNode? node = document.Nodes.Find(n => n.Id == nodeId);
+            if (node is null)
+                continue;
+
+            string title = string.IsNullOrWhiteSpace(node.Text)
+                ? "без текста"
+                : node.Text.Replace('\r', ' ').Replace('\n', ' ').Trim();
+
+            if (title.Length > 32)
+                title = title[..32] + "…";
+
+            issue.Message =
+                $"«{title}» [{nodeId.ToString()[..8]}]\n{issue.Message}";
         }
 
         return issues;
@@ -130,6 +214,7 @@ public static class DialogueValidator
 
             if (node is null || !reachable.Add(id)) continue;
             if (node.IsEnding) continue;
+            if (node.NextNodeId is Guid nextId) pending.Enqueue(nextId);
 
             foreach (DialogueChoice choice in node.Choices)
             {

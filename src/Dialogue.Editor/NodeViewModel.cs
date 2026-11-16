@@ -7,7 +7,7 @@ namespace Dialogue.Editor;
 public class NodeViewModel : INotifyPropertyChanged
 {
     public DialogueNode Model { get; }
-    public ObservableCollection<DialogueChoice> Choices{get;}
+    public ObservableCollection<ChoiceViewModel> Choices { get; }
 
     public Guid Id => Model.Id;
 
@@ -46,6 +46,46 @@ public class NodeViewModel : INotifyPropertyChanged
     public NodeViewModel(DialogueNode model)
     {
         Model = model ?? throw new ArgumentNullException(nameof(model));
-        Choices = new ObservableCollection<DialogueChoice>(model.Choices);
+        Choices = new ObservableCollection<ChoiceViewModel>();
+
+        foreach (DialogueChoice choice in model.Choices)
+            Choices.Add(new ChoiceViewModel(choice));
+    }
+
+    public DialogueFlagCondition? ShowCondition => Model.ShowCondition;
+
+    public bool HasShowCondition
+    {
+        get => Model.ShowCondition is not null;
+        set
+        {
+            if (value == HasShowCondition)
+                return;
+
+            Model.ShowCondition = value
+                ? new DialogueFlagCondition()
+                : null;
+
+            PropertyChanged?.Invoke(
+                this,
+                new PropertyChangedEventArgs(nameof(HasShowCondition)));
+            PropertyChanged?.Invoke(
+                this,
+                new PropertyChangedEventArgs(nameof(ShowCondition)));
+        }
+    }
+
+    public Guid? CharacterId
+    {
+        get => Model.CharacterId;
+        set
+        {
+            if (Model.CharacterId == value) return;
+
+            Model.CharacterId = value;
+            PropertyChanged?.Invoke(
+                this,
+                new PropertyChangedEventArgs(nameof(CharacterId)));
+        }
     }
 }

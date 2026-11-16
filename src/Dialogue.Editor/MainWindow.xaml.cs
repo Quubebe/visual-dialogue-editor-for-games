@@ -1,5 +1,7 @@
 ﻿using System.Windows;
 using Microsoft.Win32;
+using System.Windows.Controls;
+using Dialogue.Core;
 
 namespace Dialogue.Editor;
 
@@ -66,5 +68,24 @@ public partial class MainWindow : Window
             MessageBox.Show(this, ex.Message, "Не удалось открыть проект",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+    private void Preview_Click(object sender, RoutedEventArgs e)
+    {
+        var editor = (EditorViewModel)DataContext;
+        var preview = new PreviewWindow(editor.Project.Dialogue)
+        {
+            Owner = this
+        };
+        preview.ShowDialog();
+    }
+
+    private void ValidationIssues_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ListBox { SelectedItem: DialogueValidationIssue issue } ||
+            issue.NodeId is not Guid nodeId ||
+            DataContext is not EditorViewModel editor)
+            return;
+
+        editor.SelectedNode = editor.Nodes.FirstOrDefault(node => node.Id == nodeId);
     }
 }

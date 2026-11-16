@@ -152,7 +152,7 @@ public class DialogueValidatorTest
         start.CharacterId = null;
         Assert.IsEmpty(DialogueValidator.Validate(document));
     }
-    
+
     [TestMethod]
     public void NodeWithoutChoices_MustBeMarkedAsEnding()
     {
@@ -167,6 +167,99 @@ public class DialogueValidatorTest
         Assert.AreEqual<Guid?>(node.Id, issues[0].NodeId);
 
         node.IsEnding = true;
+        Assert.IsEmpty(DialogueValidator.Validate(document));
+    }
+
+    [TestMethod]
+    public void NodeCondition_RequiresFlagName()
+    {
+        var node = new DialogueNode
+        {
+            IsEnding = true,
+            ShowCondition = new DialogueFlagCondition { FlagName = "  " }
+        };
+        var document = new DialogueDocument { StartNodeId = node.Id };
+        document.Nodes.Add(node);
+
+        var issues = DialogueValidator.Validate(document);
+        Assert.HasCount(1, issues);
+        Assert.IsTrue(issues[0].IsError);
+        Assert.AreEqual<Guid?>(node.Id, issues[0].NodeId);
+
+        node.ShowCondition.FlagName = "quest";
+        Assert.IsEmpty(DialogueValidator.Validate(document));
+    }
+
+    [TestMethod]
+    public void ChoiceConditionAndChange_RequireFlagNames()
+    {
+        var start = new DialogueNode();
+        var end = new DialogueNode { IsEnding = true };
+        var choice = new DialogueChoice
+        {
+            Text = "Помочь",
+            TargetNodeId = end.Id,
+            ShowCondition = new DialogueFlagCondition()
+        };
+        choice.FlagChanges.Add(new DialogueFlagChange());
+        start.Choices.Add(choice);
+
+        var document = new DialogueDocument { StartNodeId = start.Id };
+        document.Nodes.AddRange(new[] { start, end });
+
+        var issues = DialogueValidator.Validate(document);
+        Assert.HasCount(2, issues);
+        Assert.IsTrue(issues.All(issue => issue.IsError && issue.NodeId == start.Id));
+
+        choice.ShowCondition!.FlagName = "has_flower";
+        Assert.HasCount(1, DialogueValidator.Validate(document));
+
+        choice.FlagChanges[0].FlagName = "flower_given";
+        Assert.IsEmpty(DialogueValidator.Validate(document));
+    }
+
+    [TestMethod]
+    public void DirectNextNode_IsReachableAndMustExist()
+    {
+        var end = new DialogueNode { IsEnding = true };
+        var start = new DialogueNode { NextNodeId = end.Id };
+        var document = new DialogueDocument { StartNodeId = start.Id };
+        document.Nodes.AddRange(new[] { start, end });
+
+        Assert.IsEmpty(DialogueValidator.Validate(document));
+
+        start.NextNodeId = Guid.NewGuid();
+        var issues = DialogueValidator.Validate(document);
+
+        Assert.HasCount(2, issues);
+        Assert.IsTrue(issues[0].IsError);
+        Assert.AreEqual<Guid?>(start.Id, issues[0].NodeId);
+    }
+
+    [TestMethod]
+    public void Node_CannotCombineEndingChoicesAndDirectNext()
+    {
+        var node = new DialogueNode
+        {
+            IsEnding = true
+        };
+        node.NextNodeId = node.Id;
+
+        var document = new DialogueDocument { StartNodeId = node.Id };
+        document.Nodes.Add(node);
+
+        var issues = DialogueValidator.Validate(document);
+        Assert.HasCount(1, issues);
+        Assert.IsTrue(issues[0].IsError);
+
+        node.IsEnding = false;
+        node.Choices.Add(new DialogueChoice { TargetNodeId = node.Id });
+
+        issues = DialogueValidator.Validate(document);
+        Assert.HasCount(1, issues);
+        Assert.IsTrue(issues[0].IsError);
+
+        node.NextNodeId = null;
         Assert.IsEmpty(DialogueValidator.Validate(document));
     }
 }

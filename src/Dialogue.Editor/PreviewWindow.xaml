@@ -1,0 +1,89 @@
+<Window
+    x:Class="Dialogue.Editor.PreviewWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Предпросмотр диалога"
+    Width="520"
+    Height="400">
+    <ScrollViewer
+        Margin="16"
+        HorizontalScrollBarVisibility="Disabled"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock FontWeight="Bold"
+                       Text="Исходное состояние флага"/>
+            <TextBlock Margin="0,10,0,2"
+                       Text="Имя флага"/>
+            <TextBox x:Name="FlagNameBox"
+                     Text="quest"/>
+
+            <CheckBox
+                x:Name="UseFlagBox"
+                Margin="0,10,0,0"
+                Content="Флаг задан"
+                IsChecked="True"/>
+
+            <TextBlock Text="Исходные значения флагов"
+                       FontWeight="Bold"/>
+            <TextBlock Text="По одному на строку: имя=true или имя=false"
+                       Margin="0,6,0,4"/>
+            <TextBox x:Name="InitialFlagsBox"
+                     Height="90"
+                     AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto"
+                     Text="quest=false"/>
+            <TextBlock Text="Неуказанный флаг считается отсутствующим."
+                       Margin="0,4,0,0"
+                       TextWrapping="Wrap"/>
+
+            <CheckBox
+                x:Name="FlagValueBox"
+                Margin="0,6,0,0"
+                Content="Значение: true"
+                IsEnabled="{Binding IsChecked, ElementName=UseFlagBox}"/>
+
+            <Button
+                Width="140"
+                Margin="0,16,0,0"
+                HorizontalAlignment="Left"
+                Click="Start_Click"
+                Content="Начать диалог"/>
+
+            <TextBlock
+                Margin="0,24,0,8"
+                FontWeight="Bold"
+                Text="Текущая реплика"/>
+            <TextBlock x:Name="PreviewText"
+                       TextWrapping="Wrap"/>
+            <TextBlock
+                x:Name="StatusText"
+                Margin="0,8,0,0"
+                Foreground="DarkOrange"
+                TextWrapping="Wrap"/>
+
+            <TextBlock
+                Margin="0,20,0,8"
+                FontWeight="Bold"
+                Text="Доступные ответы"/>
+            <ItemsControl x:Name="ChoicesList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button
+                            Margin="0,0,0,6"
+                            HorizontalContentAlignment="Left"
+                            Click="Choose_Click"
+                            Content="{Binding Text}"
+                            Tag="{Binding Id}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock
+                Margin="0,20,0,8"
+                FontWeight="Bold"
+                Text="Текущие значения флагов"/>
+            <TextBlock x:Name="FlagValuesText"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+    </ScrollViewer>
+</Window>
