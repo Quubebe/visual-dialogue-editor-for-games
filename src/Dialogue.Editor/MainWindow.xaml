@@ -38,11 +38,27 @@
                 Click="SaveProject_Click"
                 Content="Сохранить"/>
 
+            <Button Content="Сохранить как…"
+                    Width="115"
+                    Height="30"
+                    Margin="8,0,0,0"
+                    Click="SaveAsProject_Click"/>
+            <Button Content="Экспорт JSON"
+                    Width="115"
+                    Height="30"
+                    Margin="8,0,0,0"
+                    Click="ExportDialogue_Click"/>
             <Button Content="Проверить"
                     Width="100"
                     Height="30"
                     Margin="8,0,0,0"
                     Command="{Binding ValidateCommand}"/>
+
+            <Button Content="Схема"
+                    Width="100"
+                    Height="30"
+                    Margin="8,0,0,0"
+                    Click="Graph_Click"/>
         </StackPanel>
         <Grid Grid.Row="1"
               Grid.Column="0">
@@ -57,11 +73,17 @@
                 FontSize="18"
                 FontWeight="Bold"
                 Text="Реплики"/>
-            <Button
-                Grid.Row="1"
-                Margin="0,0,0,8"
-                Command="{Binding AddNodeCommand}"
-                Content="Добавить реплику"/>
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <Button Width="124"
+                        Content="Добавить"
+                        Command="{Binding AddNodeCommand}"/>
+                <Button Width="124"
+                        Margin="8,0,0,0"
+                        Content="Удалить"
+                        Click="DeleteNode_Click"/>
+            </StackPanel>
             <ListBox
                 Grid.Row="2"
                 Grid.Column="0"
@@ -174,6 +196,23 @@
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>
+                <GroupBox Header="Следующая реплика без ответа игрока"
+                          Margin="0,12,0,0">
+                    <StackPanel Margin="8">
+                        <TextBlock Text="Используй для продолжения разговора без вариантов ответа."
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,6"/>
+                        <ComboBox ItemsSource="{Binding Nodes}"
+                                  DisplayMemberPath="Text"
+                                  SelectedValuePath="Id"
+                                  SelectedValue="{Binding SelectedNode.NextNodeId, Mode=TwoWay}"/>
+                    </StackPanel>
+                </GroupBox>
+                <Button Content="Убрать прямой переход"
+                        Command="{Binding ClearNextNodeCommand}"
+                        HorizontalAlignment="Left"
+                        Padding="8,3"
+                        Margin="0,6,0,0"/>
                 <TextBlock
                     Margin="0,20,0,8"
                     FontWeight="Bold"
@@ -242,7 +281,12 @@
                                         </ItemsControl>
                                     </StackPanel>
                                 </GroupBox>
-
+                                <Button Content="Удалить ответ"
+                                        Command="{Binding DataContext.RemoveChoiceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        HorizontalAlignment="Left"
+                                        Padding="8,3"
+                                        Margin="0,8,0,0"/>
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

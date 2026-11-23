@@ -20,4 +20,10 @@
     <ProjectReference Include="..\..\src\Dialogue.Persistence\Dialogue.Persistence.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\..\examples\FlowerQuest.dproj"
+          Link="FlowerQuest.dproj"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
